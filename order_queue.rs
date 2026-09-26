@@ -164,4 +164,13 @@ mod tests {
         let err = q.enqueue(sample_signal(0.0, 0.99)).await.unwrap_err();
         assert!(matches!(err, QueueError::InvalidQuantity(_)));
     }
-      }
+
+    #[tokio::test]
+    async fn enqueue_applies_backpressure_on_saturation() {
+        let (q, _rx) = OrderQueue::new(2);
+        q.enqueue(sample_signal(1.0, 0.95)).await.unwrap();
+        q.enqueue(sample_signal(2.0, 0.96)).await.unwrap();
+        assert_eq!(q.enqueued_count(), 2);
+    }
+}
+

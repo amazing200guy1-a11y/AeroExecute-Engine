@@ -15,25 +15,16 @@ Designed for environments where every microsecond of jitter and every unexpected
 ---
 
 ## System Pipeline
-[ CLEAN CONSENSUS TRADE SIGNAL RECEIVED ]
-                       │
-                       ▼
-┌──────────────────────────────────────────────────┐
-│    AEROEXECUTE KERNEL (Lock-Free Rust Queue)     │
-│  Uses Ring-Buffers to eliminate thread locking   │
-└─────────────────────────┬────────────────────────┘
-│ (Sub-0.01ms Processing)
-▼
-┌──────────────────────────────────────────────────┐
-│   ORDER SIZE GOVERNOR (Compiled C++20 SIMD)      │
-│ Calculates Lot Allocation & Risk boundaries      │
-└─────────────────────────┬────────────────────────┘
-│
-▼
-┌──────────────────────────────────────────────────┐
-│   JAVA FIX PROTOCOL CONNECTOR (Object Pooled)    │
-│ Serializes trade block directly to Broker Pipe   │
-└──────────────────────────────────────────────────┘
+
+```mermaid
+flowchart TD
+    SIGNAL["📡 Ingress Trade Signal"] --> QUEUE["⚡ AeroExecute Kernel (Lock-Free Rust Queue)"]
+    QUEUE --> RISK["🛡️ Pre-Trade Risk Governor (Compiled C++20 SIMD)"]
+    RISK -->|Pass (Authorized)| FIX["🔌 Java FIX Protocol Connector (Object Pooled)"]
+    RISK -->|Breach (Veto)| ABORT["🚫 Hard Reject // Capital Protected"]
+    FIX --> VENUE["🏦 Direct Market Access (DMA) Venue"]
+```
+
 ---
 
 ## Latency & Memory Boundaries
